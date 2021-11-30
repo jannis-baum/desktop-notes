@@ -1,20 +1,26 @@
+#!/usr/bin/env python3
+
 import cv2
 import subprocess
 import os
+from pathlib import Path
 from datetime import datetime
 
-IMAGE_IN = './picture.jpg'
-IMAGE_OUT = f'bg_{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.jpg'
-NOTES = './notes.txt'
-OSA_SET_DESKTOP = f'tell application "System Events" to tell the first desktop to set picture to "{os.path.dirname(os.path.realpath(__file__))}/{IMAGE_OUT}"'
+DIR = os.path.dirname(os.path.realpath(__file__))
+
+IMAGE_IN = os.path.join(DIR, 'picture.jpg')
+IMAGE_OUT = os.path.join(DIR, f'bg_{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.jpg')
+NOTES = os.path.join(DIR, 'notes.txt')
+
+OSA_SET_DESKTOP = f'tell application "System Events" to tell the first desktop to set picture to "{IMAGE_OUT}"'
 
 def draw_text(img, text, pos=(50, 50),
         font=cv2.FONT_HERSHEY_DUPLEX, font_scale=2, font_thickness=2, font_color=(0, 0, 0),
-        bg_color=(255, 255, 255), bg_alpha=1, bg_padding=20):
+        bg_color=(255, 255, 255), bg_padding=20):
 
     x, y = pos
     (_, line_h), _ = cv2.getTextSize('pP', font, font_scale, font_thickness)
-    for n, line in enumerate(text.split('\n')):
+    for line in text.split('\n'):
         if line != '':
             (line_w, _), _ = cv2.getTextSize(line, font, font_scale, font_thickness)
             rect = img.copy()
@@ -33,12 +39,18 @@ def set_desktop():
     subprocess.call(f'osascript -e \'{OSA_SET_DESKTOP}\'', shell=True)
 
 def get_notes():
-    subprocess.call(f'vim {NOTES}', shell=True)
+    Path(NOTES).touch()
+    subprocess.call(['vim', NOTES])
     with open(NOTES) as note_file:
         notes = note_file.read()[:-1]
         return notes if notes != '\n' else ''
 
+def clear_pictures():
+    for pic in Path(DIR).glob('bg_*.jpg'):
+        os.remove(pic)
+
 if __name__ == '__main__':
+    clear_pictures()
     image = cv2.imread(IMAGE_IN)
     notes = get_notes()
     draw_text(image, notes)

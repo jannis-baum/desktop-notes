@@ -1,6 +1,0 @@
-#!/bin/sh
-
-cd $(dirname $0)
-rm bg_*
-python3 edit-notes.py
-
